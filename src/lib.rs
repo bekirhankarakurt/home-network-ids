@@ -34,6 +34,10 @@
 
 #![deny(unsafe_code)]
 
+pub mod alert;
 pub mod capture;
+pub mod config;
+pub mod oui;
 pub mod packet;
+pub mod summary;
 pub mod time;
