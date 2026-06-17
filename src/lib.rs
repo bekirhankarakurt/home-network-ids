@@ -40,5 +40,8 @@ pub mod config;
 pub mod detect;
 pub mod oui;
 pub mod packet;
+pub mod pipeline;
+pub mod sink;
+pub mod stats;
 pub mod summary;
 pub mod time;
