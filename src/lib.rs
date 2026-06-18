@@ -37,6 +37,7 @@
 pub mod alert;
 pub mod capture;
 pub mod config;
+pub mod dashboard;
 pub mod detect;
 pub mod oui;
 pub mod packet;
@@ -44,4 +45,5 @@ pub mod pipeline;
 pub mod sink;
 pub mod stats;
 pub mod summary;
+pub mod synth;
 pub mod time;
