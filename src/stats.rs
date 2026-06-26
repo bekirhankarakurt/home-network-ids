@@ -128,7 +128,8 @@ impl Stats {
             .map(|a| IpAddr::V4(a.sender_ip))
             .or(pkt.src_ip)
             .filter(|ip| crate::detect::inventory::is_local_ip(*ip));
-        if ip.is_some() {
+        // Prefer an IPv4 address for display; IPv6 only fills an empty slot.
+        if ip.is_some_and(|ip| ip.is_ipv4() || host.ip.is_none()) {
             host.ip = ip;
         }
     }
