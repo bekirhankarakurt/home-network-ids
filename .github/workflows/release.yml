@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            tool: cargo
+          - target: aarch64-unknown-linux-gnu
+            tool: cross
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: taiki-e/install-action@v2
+        if: matrix.tool == 'cross'
+        with:
+          tool: cross
+      - name: Build
+        run: ${{ matrix.tool }} build --locked --release --target ${{ matrix.target }}
+      - name: Package
+        run: |
+          name="hnids-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          mkdir -p "dist/$name"
+          cp "target/${{ matrix.target }}/release/hnids" README.md LICENSE CHANGELOG.md hnids.example.toml "dist/$name/"
+          tar -C dist -czf "dist/$name.tar.gz" "$name"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum *.tar.gz > SHA256SUMS && cat SHA256SUMS
+      - name: Release notes from CHANGELOG
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found && /^\[[^]]+\]: / { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          test -s notes.md
+          cat notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body_path: notes.md
+          files: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
