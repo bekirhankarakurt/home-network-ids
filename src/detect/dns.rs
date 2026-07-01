@@ -256,7 +256,7 @@ mod tests {
             "safebrowsing.googleapis.com",
         ];
         let pkts: Vec<_> = names.iter().map(|n| dns(0, n, false, 0)).collect();
-        assert!(kinds(&mut d, &pkts).is_empty());
+        assert_eq!(kinds(&mut d, &pkts).len(), 0);
     }
 
     #[test]
@@ -279,6 +279,6 @@ mod tests {
             .collect();
         assert_eq!(kinds(&mut d, &pkts).len(), 3);
         let ok: Vec<_> = (0..20).map(|i| dns(i, "ok.example", true, 0)).collect();
-        assert!(kinds(&mut DnsDetector::new(&Dns::default()), &ok).is_empty());
+        assert_eq!(kinds(&mut DnsDetector::new(&Dns::default()), &ok).len(), 0);
     }
 }
