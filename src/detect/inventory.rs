@@ -327,7 +327,7 @@ mod tests {
         assert_eq!(dev.ips.len(), 1);
         let mut out = Vec::new();
         again.inspect(&frame(400, "b8:27:eb:00:00:01", None), &mut out);
-        assert!(out.is_empty());
+        assert_eq!(out.len(), 0);
         std::fs::remove_file(&path).unwrap();
     }
 

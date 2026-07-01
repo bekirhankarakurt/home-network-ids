@@ -276,7 +276,7 @@ mod tests {
                 )
             })
             .collect();
-        assert!(run(&mut d, &pkts).is_empty());
+        assert_eq!(run(&mut d, &pkts).len(), 0);
     }
 
     #[test]
@@ -348,6 +348,6 @@ mod tests {
                 )
             })
             .collect();
-        assert!(run(&mut d, &pkts).is_empty());
+        assert_eq!(run(&mut d, &pkts).len(), 0);
     }
 }
