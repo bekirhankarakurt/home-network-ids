@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      # ratatui >= 0.30 requires Rust 1.88, above the 1.85 MSRV.
+      - dependency-name: ratatui
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: crossterm
+        update-types: ["version-update:semver-minor"]
+    groups:
+      cargo-minor:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
