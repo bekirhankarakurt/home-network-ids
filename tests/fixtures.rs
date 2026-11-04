@@ -158,6 +158,6 @@ fn disabled_detectors_stay_quiet() {
     )
     .unwrap();
     let (alerts, report) = replay("mixed.pcapng", config);
-    assert!(alerts.is_empty());
+    assert_eq!(alerts.len(), 0);
     assert_eq!(report.counters.parsed, report.counters.captured);
 }
