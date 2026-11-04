@@ -176,6 +176,6 @@ mod tests {
         assert_eq!(out.len(), 2);
         assert_eq!(e.suppressed(), 3);
         assert_eq!(e.detector_names(), vec!["always"]);
-        assert!(e.checkpoint().is_empty());
+        assert_eq!(e.checkpoint().len(), 0);
     }
 }
