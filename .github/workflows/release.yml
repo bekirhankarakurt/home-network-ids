@@ -3,12 +3,18 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to create and release (must match the Cargo.toml version, e.g. v1.0.0)
+        required: true
 
 permissions:
   contents: read
 
 env:
   CARGO_TERM_COLOR: always
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   build:
@@ -24,6 +30,10 @@ jobs:
             tool: cross
     steps:
       - uses: actions/checkout@v7
+      - name: Check tag matches crate version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          test "$TAG" = "v$version" || { echo "tag $TAG does not match Cargo.toml version $version"; exit 1; }
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -35,7 +45,7 @@ jobs:
         run: ${{ matrix.tool }} build --locked --release --target ${{ matrix.target }}
       - name: Package
         run: |
-          name="hnids-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          name="hnids-${TAG}-${{ matrix.target }}"
           mkdir -p "dist/$name"
           cp "target/${{ matrix.target }}/release/hnids" README.md LICENSE CHANGELOG.md hnids.example.toml "dist/$name/"
           tar -C dist -czf "dist/$name.tar.gz" "$name"
@@ -61,7 +71,7 @@ jobs:
         run: cd dist && sha256sum *.tar.gz > SHA256SUMS && cat SHA256SUMS
       - name: Release notes from CHANGELOG
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${TAG#v}"
           awk -v v="$version" '
             $0 ~ "^## \\[" v "\\]" { found = 1; next }
             found && /^## \[/ { exit }
@@ -72,7 +82,9 @@ jobs:
           cat notes.md
       - uses: softprops/action-gh-release@v3
         with:
-          name: ${{ github.ref_name }}
+          tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ env.TAG }}
           body_path: notes.md
           files: |
             dist/*.tar.gz
