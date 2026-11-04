@@ -1,0 +1,73 @@
+name: Docs & coverage
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build API docs and coverage report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: API docs
+        run: cargo doc --locked --no-deps
+      - name: Coverage
+        run: |
+          cargo llvm-cov --locked --html --output-dir target/cov
+          cargo llvm-cov report --json --summary-only --output-path target/cov/summary.json
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -r target/doc site/api
+          cp -r target/cov/html site/coverage
+          pct=$(jq '.data[0].totals.lines.percent' target/cov/summary.json)
+          label=$(printf '%.1f%%' "$pct")
+          color=$(awk -v p="$pct" 'BEGIN { print (p >= 90 ? "brightgreen" : p >= 80 ? "green" : p >= 70 ? "yellowgreen" : p >= 60 ? "yellow" : "red") }')
+          printf '{"schemaVersion":1,"label":"coverage","message":"%s","color":"%s"}\n' "$label" "$color" > site/coverage.json
+          cat > site/index.html <<HTML
+          <!doctype html>
+          <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>home-network-ids</title>
+          <style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem;line-height:1.6}</style></head>
+          <body><h1>home-network-ids</h1>
+          <p>Home network intrusion detection for Linux.</p>
+          <ul>
+          <li><a href="api/home_network_ids/index.html">API documentation</a></li>
+          <li><a href="coverage/index.html">Test coverage report</a> (lines: ${label})</li>
+          <li><a href="https://github.com/bekirhankarakurt/home-network-ids">Source on GitHub</a></li>
+          </ul></body></html>
+          HTML
+          echo "Line coverage: $label" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
