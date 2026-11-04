@@ -6,6 +6,12 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
+ignore = [
+    # `paste` is unmaintained but has no known vulnerability; it is a
+    # compile-time macro pulled in by ratatui 0.29. ratatui 0.30 drops it but
+    # requires Rust 1.88, above this crate's MSRV.
+    { id = "RUSTSEC-2024-0436", reason = "unmaintained, no vulnerability; ratatui 0.29 build-time dependency" },
+]
 
 [licenses]
 version = 2
@@ -15,7 +21,6 @@ allow = [
     "Apache-2.0",
     "Apache-2.0 WITH LLVM-exception",
     "BSD-2-Clause",
-    "BSL-1.0",
     "Unicode-3.0",
     "Unlicense",
     "Zlib",
