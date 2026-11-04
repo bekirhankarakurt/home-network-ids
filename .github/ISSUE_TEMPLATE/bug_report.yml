@@ -1,0 +1,51 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting! For security issues, see SECURITY.md instead.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `hnids --version`
+      placeholder: hnids 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options:
+        - live capture
+        - replay
+        - dashboard
+        - inventory / config
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Include the exact command and its output.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Distribution, kernel (`uname -r`), interface type, Rust version if built from source.
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Relevant parts of your TOML config, if any.
+      render: toml
