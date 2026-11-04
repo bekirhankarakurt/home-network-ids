@@ -1,0 +1,91 @@
+# Curated subset of the IEEE MA-L registry for devices common on home
+# networks. Format: 24-bit prefix (hex), vendor. Extend at runtime with
+# [inventory] oui_file = "/path/to/oui.csv" (the full IEEE file works).
+00000C,Cisco
+0000F0,Samsung
+00041F,Sony Interactive
+000569,VMware
+00090F,Fortinet
+0009BF,Nintendo
+000393,Apple
+000A95,Apple
+000C29,VMware
+000D93,Apple
+000E58,Sonos
+001132,Synology
+0013A9,Sony
+00146C,Netgear
+00155D,Microsoft Hyper-V
+00163E,Xen
+001656,Nintendo
+0017F2,Apple
+001788,Philips Lighting
+001A11,Google
+001B21,Intel
+001B63,Apple
+001C14,VMware
+001EC2,Apple
+00248C,ASUSTek
+002500,Apple
+005056,VMware
+00E04C,Realtek
+00E0FC,Huawei
+0242AC,Docker bridge
+0418D6,Ubiquiti
+080027,VirtualBox
+14CC20,TP-Link
+18B430,Nest Labs
+1C7EE5,D-Link
+204E7F,Netgear
+240AC4,Espressif
+246F28,Espressif
+24A43C,Ubiquiti
+286C07,Xiaomi
+28CDC1,Raspberry Pi
+2CCF67,Raspberry Pi
+30AEA4,Espressif
+3810D5,AVM
+3C0754,Apple
+3C5AB4,Google
+3CD92B,Hewlett Packard
+4419B6,Hikvision
+44650D,Amazon
+4C5E0C,MikroTik
+50C7BF,TP-Link
+525400,QEMU/KVM
+546009,Google
+5CAAFD,Sonos
+5CCF7F,Espressif
+640980,Xiaomi
+6C3B6B,MikroTik
+7CFF4D,AVM
+802AA8,Ubiquiti
+84F3EB,Espressif
+98B6E9,Nintendo
+A040A0,Netgear
+A45E60,Apple
+A4CF12,Espressif
+ACBC32,Apple
+B0A737,Roku
+B0C554,D-Link
+B4FBE4,Ubiquiti
+B827EB,Raspberry Pi
+B8E937,Sonos
+C056E3,Hikvision
+C46E1F,TP-Link
+C80E14,AVM
+D4CA6D,MikroTik
+D83ADD,Raspberry Pi
+D850E6,ASUSTek
+DC3A5E,Roku
+DCA632,Raspberry Pi
+E45F01,Raspberry Pi
+E48D8C,MikroTik
+ECFABC,Espressif
+F01898,Apple
+F0272D,Amazon
+F4F26D,TP-Link
+F4F5D8,Google
+F88FCA,Google
+FCA667,Amazon
+FCECDA,Ubiquiti

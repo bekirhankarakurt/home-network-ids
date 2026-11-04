@@ -1,0 +1,55 @@
+# hnids rule configuration. Every value below is the built-in default;
+# copy this file, keep only what you change, and pass it with --config.
+# Unknown keys are rejected so a typo cannot silently disable a rule.
+
+[general]
+# Identical alerts (same kind + source) are suppressed for this many seconds.
+alert_cooldown_secs = 60
+
+[pipeline]
+# Capacity of each bounded channel between capture, parse, detect and sink.
+# Live capture drops (and counts) frames when a queue is full.
+channel_capacity = 8192
+
+[portscan]
+enabled = true
+window_secs = 10            # sliding window
+port_threshold = 20         # distinct host:port targets from one source -> syn_scan
+host_threshold = 16         # distinct hosts probed from one source     -> host_sweep
+syn_rate_threshold = 100    # SYN probes per second over the window      -> syn_rate
+stealth_threshold = 3       # FIN / NULL / XMAS probes of one type       -> *_scan
+ignore_sources = []         # e.g. ["192.168.1.10"] for your own scanner
+
+[arp]
+enabled = true
+gratuitous_window_secs = 10
+gratuitous_threshold = 5    # gratuitous ARPs from one MAC -> gratuitous_arp_flood
+
+# Known-good bindings; any contradicting ARP is a critical alert.
+[arp.static_bindings]
+# "192.168.1.1" = "38:10:d5:aa:00:01"
+
+[inventory]
+enabled = true
+path = "hnids-inventory.json"   # persistent MAC inventory (JSON)
+alert_on_new = true             # new_device alert on first sighting
+allowlist = []                  # if non-empty, unlisted MACs -> rogue_device
+# oui_file = "/usr/share/ieee-data/oui.csv"   # extend the built-in vendor table
+
+[dns]
+enabled = true
+max_name_len = 100          # longer query names -> dns_long_name
+entropy_threshold = 4.0     # bits/char of the subdomain part -> dns_high_entropy
+entropy_min_len = 24        # only subdomains at least this long are scored
+nxdomain_window_secs = 30
+nxdomain_threshold = 10     # NXDOMAIN answers to one client -> dns_nxdomain_burst
+ignore_suffixes = ["in-addr.arpa", "ip6.arpa"]
+
+[output]
+min_severity = "low"        # info | low | medium | high | critical
+# alerts = "/var/log/hnids/alerts.jsonl"   # default: stdout
+
+[output.syslog]
+enabled = false
+target = "unix:/dev/log"    # or "udp:192.168.1.5:514"
+facility = 16               # local0
