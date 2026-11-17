@@ -248,7 +248,10 @@ mod tests {
         d.inspect(&arp(0, GW, GW, gw_ip, [192, 168, 1, 5]), &mut out);
         // Host addresses from 0.0.0.1 stay far below the gateway, so none collide with it.
         for n in 1..u32::try_from(MAX_BINDINGS).unwrap() {
-            d.inspect(&arp(0, GW, GW, Ipv4Addr::from(n).octets(), [192, 168, 1, 5]), &mut out);
+            d.inspect(
+                &arp(0, GW, GW, Ipv4Addr::from(n).octets(), [192, 168, 1, 5]),
+                &mut out,
+            );
         }
         let extra = Ipv4Addr::from(u32::try_from(MAX_BINDINGS).unwrap());
         d.inspect(&arp(0, GW, GW, extra.octets(), [192, 168, 1, 5]), &mut out);

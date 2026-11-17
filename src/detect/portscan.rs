@@ -362,7 +362,10 @@ mod tests {
         let scanner = [10, 0, 0, 66];
         let mut out = Vec::new();
         for port in 1..5 {
-            d.inspect(&syn(0, scanner, [10, 0, 0, 1], port, TcpFlags::SYN), &mut out);
+            d.inspect(
+                &syn(0, scanner, [10, 0, 0, 1], port, TcpFlags::SYN),
+                &mut out,
+            );
         }
         for i in 0..MAX_SOURCES {
             let src = (u32::try_from(i).unwrap() + 1).to_be_bytes();

@@ -299,7 +299,7 @@ mod tests {
             let ip = (u32::try_from(i).unwrap() + 1).to_be_bytes();
             d.inspect(&nx(0, ip), &mut out);
         }
-        assert!(out.is_empty());
+        assert!(out.is_empty(), "{out:?}");
         let first = 1u32.to_be_bytes();
         for _ in 0..9 {
             d.inspect(&nx(1, first), &mut out);
@@ -311,6 +311,6 @@ mod tests {
         for _ in 0..12 {
             d.inspect(&nx(1, newbie), &mut out);
         }
-        assert!(out.is_empty());
+        assert!(out.is_empty(), "{out:?}");
     }
 }
