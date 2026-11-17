@@ -109,10 +109,11 @@ impl Detector for ArpDetector {
                 ),
                 _ => {}
             }
-            if self.bindings.len() >= MAX_BINDINGS && !self.bindings.contains_key(&ip) {
-                self.bindings.clear();
+            // Dropping the map would make the next claim of a known address look
+            // like a first sighting, so a full table rejects new addresses instead.
+            if self.bindings.len() < MAX_BINDINGS || self.bindings.contains_key(&ip) {
+                self.bindings.insert(ip, mac);
             }
-            self.bindings.insert(ip, mac);
         }
 
         if arp.is_gratuitous() {
@@ -236,5 +237,30 @@ mod tests {
             kinds(&mut d, &pkts),
             vec!["gratuitous_arp_flood", "gratuitous_arp_flood"]
         );
+    }
+
+    #[test]
+    fn full_table_keeps_learned_binding() {
+        let mut d = ArpDetector::new(&Arp::default());
+        let gw_ip = [192, 168, 1, 1];
+        let gw = Ipv4Addr::from(gw_ip);
+        let mut out = Vec::new();
+        d.inspect(&arp(0, GW, GW, gw_ip, [192, 168, 1, 5]), &mut out);
+        // Host addresses from 0.0.0.1 stay far below the gateway, so none collide with it.
+        for n in 1..u32::try_from(MAX_BINDINGS).unwrap() {
+            d.inspect(
+                &arp(0, GW, GW, Ipv4Addr::from(n).octets(), [192, 168, 1, 5]),
+                &mut out,
+            );
+        }
+        let extra = Ipv4Addr::from(u32::try_from(MAX_BINDINGS).unwrap());
+        d.inspect(&arp(0, GW, GW, extra.octets(), [192, 168, 1, 5]), &mut out);
+        assert!(out.is_empty(), "{out:?}");
+        assert_eq!(d.binding(gw), Some(MacAddr(GW)));
+        assert_eq!(d.binding(extra), None);
+        d.inspect(&arp(1, EVIL, EVIL, gw_ip, [192, 168, 1, 5]), &mut out);
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].kind, "arp_binding_change");
+        assert_eq!(d.binding(gw), Some(MacAddr(EVIL)));
     }
 }

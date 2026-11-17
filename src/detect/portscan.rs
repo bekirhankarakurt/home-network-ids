@@ -90,9 +90,6 @@ impl PortScanDetector {
         self.last_prune = now;
         let cutoff = now.minus(self.span);
         self.sources.retain(|_, s| s.last_seen >= cutoff);
-        if self.sources.len() >= MAX_SOURCES {
-            self.sources.clear();
-        }
     }
 
     fn sample_ports(state: &SourceState) -> Vec<u16> {
@@ -130,6 +127,10 @@ impl Detector for PortScanDetector {
             return;
         }
         self.prune(pkt.ts);
+        // Wiping every source would reset a scan already in progress back to one probe.
+        if self.sources.len() >= MAX_SOURCES && !self.sources.contains_key(&src) {
+            return;
+        }
         let span = self.span;
         let state = self
             .sources
@@ -349,5 +350,28 @@ mod tests {
             })
             .collect();
         assert_eq!(run(&mut d, &pkts).len(), 0);
+    }
+
+    #[test]
+    fn full_table_keeps_scan_progress() {
+        let cfg = PortScan {
+            port_threshold: 5,
+            ..PortScan::default()
+        };
+        let mut d = PortScanDetector::new(&cfg);
+        let scanner = [10, 0, 0, 66];
+        let mut out = Vec::new();
+        for port in 1..5 {
+            d.inspect(
+                &syn(0, scanner, [10, 0, 0, 1], port, TcpFlags::SYN),
+                &mut out,
+            );
+        }
+        for i in 0..MAX_SOURCES {
+            let src = (u32::try_from(i).unwrap() + 1).to_be_bytes();
+            d.inspect(&syn(0, src, [10, 0, 0, 1], 22, TcpFlags::SYN), &mut out);
+        }
+        d.inspect(&syn(0, scanner, [10, 0, 0, 1], 5, TcpFlags::SYN), &mut out);
+        assert_eq!(out.iter().filter(|a| a.kind == "syn_scan").count(), 1);
     }
 }

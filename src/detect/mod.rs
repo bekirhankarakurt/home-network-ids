@@ -113,11 +113,18 @@ impl Engine {
                     continue;
                 }
             }
-            if self.last_fired.len() >= MAX_COOLDOWN_KEYS {
+            if self.last_fired.len() >= MAX_COOLDOWN_KEYS
+                && !self.last_fired.contains_key(&alert.dedup_key)
+            {
                 let cutoff = alert.ts.minus(self.cooldown);
                 self.last_fired.retain(|_, t| *t >= cutoff);
             }
-            self.last_fired.insert(alert.dedup_key.clone(), alert.ts);
+            // A full map keeps keys already inside the cooldown and rejects new ones.
+            if self.last_fired.len() < MAX_COOLDOWN_KEYS
+                || self.last_fired.contains_key(&alert.dedup_key)
+            {
+                self.last_fired.insert(alert.dedup_key.clone(), alert.ts);
+            }
             out.push(alert);
         }
     }
@@ -177,5 +184,38 @@ mod tests {
         assert_eq!(e.suppressed(), 3);
         assert_eq!(e.detector_names(), vec!["always"]);
         assert_eq!(e.checkpoint().len(), 0);
+    }
+
+    struct ByLen;
+
+    impl Detector for ByLen {
+        fn name(&self) -> &'static str {
+            "bylen"
+        }
+        fn inspect(&mut self, pkt: &PacketSummary, out: &mut Vec<Alert>) {
+            out.push(Alert::new(pkt.ts, "bylen", "hit", Severity::Low, "hit").dedup(pkt.len));
+        }
+    }
+
+    fn pkt_len(secs: u64, len: usize) -> PacketSummary {
+        let mut p = pkt(secs);
+        p.len = len;
+        p
+    }
+
+    #[test]
+    fn full_cooldown_keeps_old_keys_and_rejects_new() {
+        let mut e = Engine::new(vec![Box::new(ByLen)], Duration::from_secs(60));
+        let mut out = Vec::new();
+        for i in 0..MAX_COOLDOWN_KEYS {
+            e.process(&pkt_len(0, i + 1), &mut out);
+        }
+        e.process(&pkt_len(10, 1), &mut out);
+        assert_eq!(e.suppressed(), 1);
+        let extra = MAX_COOLDOWN_KEYS + 1;
+        e.process(&pkt_len(10, extra), &mut out);
+        e.process(&pkt_len(20, extra), &mut out);
+        assert_eq!(e.suppressed(), 1);
+        assert_eq!(out.len(), MAX_COOLDOWN_KEYS + 2);
     }
 }
