@@ -147,6 +147,9 @@ impl Detector for DnsDetector {
                 w.expire(now);
                 !w.is_empty()
             });
+            if self.nxdomain.len() >= MAX_CLIENTS {
+                return;
+            }
         }
         let count = self
             .nxdomain
@@ -280,5 +283,34 @@ mod tests {
         assert_eq!(kinds(&mut d, &pkts).len(), 3);
         let ok: Vec<_> = (0..20).map(|i| dns(i, "ok.example", true, 0)).collect();
         assert_eq!(kinds(&mut DnsDetector::new(&Dns::default()), &ok).len(), 0);
+    }
+
+    fn nx(ms: u64, client: [u8; 4]) -> PacketSummary {
+        let mut pkt = dns(ms, "nope.example", true, RCODE_NXDOMAIN);
+        pkt.dst_ip = Some(IpAddr::from(client));
+        pkt
+    }
+
+    #[test]
+    fn full_client_table_keeps_existing_and_drops_new() {
+        let mut d = DnsDetector::new(&Dns::default());
+        let mut out = Vec::new();
+        for i in 0..MAX_CLIENTS {
+            let ip = (u32::try_from(i).unwrap() + 1).to_be_bytes();
+            d.inspect(&nx(0, ip), &mut out);
+        }
+        assert!(out.is_empty());
+        let first = 1u32.to_be_bytes();
+        for _ in 0..9 {
+            d.inspect(&nx(1, first), &mut out);
+        }
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].kind, "dns_nxdomain_burst");
+        out.clear();
+        let newbie = (u32::try_from(MAX_CLIENTS).unwrap() + 1).to_be_bytes();
+        for _ in 0..12 {
+            d.inspect(&nx(1, newbie), &mut out);
+        }
+        assert!(out.is_empty());
     }
 }
